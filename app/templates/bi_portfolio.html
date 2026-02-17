@@ -1,0 +1,452 @@
+{% extends "base_auth.html" %}
+{% block content %}
+
+<style>
+  /* ===== Page header ===== */
+  .pagehead{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:18px;
+  }
+  .pagehead h1{
+    margin:0;
+    font-size:22px;
+    letter-spacing:.2px;
+  }
+  .pagehead p{
+    margin:6px 0 0 0;
+    color:var(--muted);
+    max-width:860px;
+    line-height:1.45;
+  }
+
+  /* ===== Controls ===== */
+  .controls{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin: 14px 0 20px 0;
+  }
+  .search{
+    flex:1 1 320px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1px solid var(--neutral);
+    border-radius:14px;
+    padding:10px 12px;
+    background:#fff;
+    box-shadow: 0 8px 18px rgba(0,0,0,.04);
+  }
+  .search input{
+    border:none;
+    outline:none;
+    width:100%;
+    font-size:14px;
+    font-family: var(--font);
+  }
+
+  .chiprow{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .chip{
+    border:1px solid var(--neutral);
+    background:#fff;
+    padding:8px 10px;
+    border-radius:999px;
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+    transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .chip:hover{ transform: translateY(-1px); }
+  .chip.active{
+    border-color: rgba(14,50,148,.25);
+    box-shadow: 0 10px 24px rgba(0,0,0,.08);
+    font-weight: 850;
+  }
+
+  /* ===== Grid ===== */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:18px;
+  }
+  @media (max-width:1100px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ===== Card polish ===== */
+  .card{
+    border:1px solid var(--neutral);
+    border-radius:18px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow: 0 14px 34px rgba(0,0,0,.06);
+    transform: translateY(0);
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 18px 44px rgba(0,0,0,.10);
+    border-color: rgba(14,50,148,.18);
+  }
+
+  .cardtop{
+    padding:14px 14px 12px 14px;
+    border-bottom:1px solid rgba(229,231,235,.9);
+    background: linear-gradient(180deg, rgba(14,50,148,.06), rgba(255,255,255,0));
+  }
+  .titleline{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .card h3{
+    margin:0;
+    font-size:16px;
+    letter-spacing:.2px;
+  }
+  .badge{
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(9,16,42,.10);
+    background: rgba(255,255,255,.85);
+    color: rgba(9,16,42,.85);
+    white-space:nowrap;
+  }
+  .desc{
+    margin:8px 0 0 0;
+    font-size:13.5px;
+    color:var(--muted);
+    line-height:1.45;
+  }
+
+  /* ===== Preview frame + click overlay ===== */
+  .framewrap{
+    position:relative;
+    width:100%;
+    padding-top:56.25%; /* 16:9 */
+    background:#fff;
+    border-bottom-left-radius:18px;
+    border-bottom-right-radius:18px;
+  }
+  .framewrap iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+  }
+
+  /* Overlay to capture click (iframes eat clicks) */
+  .frameclick{
+    position:absolute;
+    inset:0;
+    z-index:5;
+    cursor:pointer;
+    background: rgba(0,0,0,0);
+    transition: background .12s ease;
+  }
+  .card:hover .frameclick{
+    background: rgba(14,50,148,.04);
+  }
+
+  /* "Click to expand" hint */
+  .peekhint{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    z-index:6;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:850;
+    background:#fff;
+    border:1px solid rgba(9,16,42,.10);
+    box-shadow: 0 10px 26px rgba(0,0,0,.10);
+    opacity:0;
+    transform: translateY(3px);
+    transition: opacity .15s ease, transform .15s ease;
+    pointer-events:none;
+  }
+  .card:hover .peekhint{
+    opacity:1;
+    transform: translateY(0);
+  }
+
+  .empty{
+    display:none;
+    margin-top:12px;
+    padding:14px;
+    border:1px dashed var(--neutral);
+    border-radius:14px;
+    color:var(--muted);
+    background:#fff;
+  }
+
+  /* ===== Modal polish ===== */
+  .modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.58);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+    padding:16px;
+  }
+  .modal.show{ display:flex; }
+
+  .modal-content{
+    width: min(1500px, 99vw);
+    height: min(980px, 94vh);
+    background:#fff;
+    border-radius:16px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    box-shadow: 0 26px 80px rgba(0,0,0,.45);
+    transform: scale(.985);
+    opacity: .0;
+    transition: transform .14s ease, opacity .14s ease;
+  }
+  .modal.show .modal-content{
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 12px;
+    background:var(--blue);
+    color:#fff;
+    font-weight:850;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  .modal-title{
+    font-size:13.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    padding-right: 10px;
+    line-height: 1.2;
+  }
+  .modal-close{
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.22);
+    color:#fff;
+    width: 38px;
+    height: 34px;
+    border-radius: 10px;
+    cursor:pointer;
+    font-size: 18px;
+    line-height: 0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex: 0 0 auto;
+  }
+  .modal-close:hover{ background: rgba(255,255,255,.18); }
+
+  .modal-body{
+    flex: 1 1 auto;
+    min-height: 0; /* critical: prevents iframe shrink */
+    background:#fff;
+  }
+  .modal-body iframe{
+    width:100%;
+    height:100%;
+    border:0;
+  }
+</style>
+
+<div class="pagehead">
+  <div>
+    <h1>Business Intelligence Portfolio</h1>
+    <p>
+      A suite of Power BI analytics products. Click any report preview to open a full-screen viewer.
+    </p>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="search" role="search" aria-label="Search reports">
+    <input id="q" type="text" placeholder="Search reports (workflow, inventory, executive...)"/>
+  </div>
+
+  <div class="chiprow" id="chips">
+    <div class="chip active" data-cat="all">All</div>
+    {% for c in categories %}
+      <div class="chip" data-cat="{{ c }}">{{ c }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid" id="grid">
+  {% for r in reports %}
+  <article class="card"
+    data-title="{{ (r.title or '')|lower }}"
+    data-desc="{{ (r.description or '')|lower }}"
+    data-cat="{{ (r.category or 'Other')|lower }}">
+
+    <div class="cardtop">
+      <div class="titleline">
+        <h3>{{ r.title }}</h3>
+        <span class="badge">{{ r.category or "Other" }}</span>
+      </div>
+      <p class="desc">{{ r.description }}</p>
+    </div>
+
+    {# Append pane-hiding params where possible #}
+    {% set embed_src = (r.iframe_src ~ '&navContentPaneEnabled=false&filterPaneEnabled=false') %}
+
+    <div class="framewrap">
+      <iframe
+        src="{{ embed_src }}"
+        loading="lazy"
+        allowfullscreen="true">
+      </iframe>
+
+      <!-- overlay captures click -->
+      <div class="frameclick open-report"
+           role="button"
+           tabindex="0"
+           aria-label="Open report {{ r.title }}"
+           data-src="{{ embed_src }}"
+           data-title="{{ r.title }}"></div>
+
+      <div class="peekhint">Click to expand</div>
+    </div>
+
+  </article>
+  {% endfor %}
+</div>
+
+<div class="empty" id="empty">No reports match your search/filter.</div>
+
+<!-- Modal -->
+<div id="reportModal" class="modal" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-label="Report viewer">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Report</div>
+      <button id="closeModal" class="modal-close" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <iframe id="modalIframe" src="" allowfullscreen="true"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const q = document.getElementById("q");
+  const grid = document.getElementById("grid");
+  const chips = document.getElementById("chips");
+  const empty = document.getElementById("empty");
+
+  const modal = document.getElementById("reportModal");
+  const modalIframe = document.getElementById("modalIframe");
+  const modalTitle = document.getElementById("modalTitle");
+  const closeBtn = document.getElementById("closeModal");
+
+  if(!grid || !chips) return;
+
+  // ===== Search / Filter =====
+  let activeCat = "all";
+
+  function apply(){
+    const term = (q?.value || "").trim().toLowerCase();
+    const cards = grid.querySelectorAll(".card");
+    let shown = 0;
+
+    cards.forEach(card => {
+      const title = card.getAttribute("data-title") || "";
+      const desc  = card.getAttribute("data-desc") || "";
+      const cat   = (card.getAttribute("data-cat") || "").toLowerCase();
+
+      const matchTerm = !term || title.includes(term) || desc.includes(term);
+      const matchCat  = (activeCat === "all") || (cat === activeCat);
+
+      const ok = matchTerm && matchCat;
+      card.style.display = ok ? "" : "none";
+      if(ok) shown++;
+    });
+
+    if(empty) empty.style.display = shown ? "none" : "block";
+  }
+
+  chips.addEventListener("click", (e) => {
+    const el = e.target.closest(".chip");
+    if(!el) return;
+    chips.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+    el.classList.add("active");
+    activeCat = (el.getAttribute("data-cat") || "all").toLowerCase();
+    apply();
+  });
+
+  if(q) q.addEventListener("input", apply);
+
+  // ===== Modal =====
+  function openModal(src, title){
+    modalTitle.textContent = title || "Report";
+    modalIframe.src = src || "";
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal(){
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    modalIframe.src = ""; // stop report
+    document.body.style.overflow = "";
+  }
+
+  // click any overlay
+  grid.addEventListener("click", (e) => {
+    const el = e.target.closest(".open-report");
+    if(!el) return;
+    e.preventDefault();
+    openModal(el.getAttribute("data-src"), el.getAttribute("data-title"));
+  });
+
+  // keyboard open (Enter / Space)
+  grid.addEventListener("keydown", (e) => {
+    const el = e.target.closest(".open-report");
+    if(!el) return;
+    if(e.key === "Enter" || e.key === " "){
+      e.preventDefault();
+      openModal(el.getAttribute("data-src"), el.getAttribute("data-title"));
+    }
+  });
+
+  if(closeBtn) closeBtn.addEventListener("click", closeModal);
+
+  // click outside closes
+  if(modal){
+    modal.addEventListener("click", (e) => {
+      if(e.target === modal) closeModal();
+    });
+  }
+
+  // ESC closes
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && modal.classList.contains("show")) closeModal();
+  });
+
+  apply();
+})();
+</script>
+
+{% endblock %}

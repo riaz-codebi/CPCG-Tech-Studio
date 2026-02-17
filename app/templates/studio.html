@@ -1,0 +1,87 @@
+{% extends "base_auth.html" %}
+
+{% block content %}
+<div style="max-width: 980px;">
+
+  <!-- Header -->
+  <div style="margin-bottom: 22px;">
+    <h1 style="margin:0 0 8px; font-size: 20px; letter-spacing:-.3px;">
+      
+    </h1>
+    <p style="margin:0; color:#6B7280; line-height:1.65;">
+      Welcome to CPCG Tech Studio. This authenticated environment provides access to working demonstration modules
+      developed within CPCG’s innovation sandbox. Each capability can be delivered through API subscription for internal
+      integration or implemented through a custom deployment.
+    </p>
+  </div>
+
+  <!-- Sections -->
+  <div style="border-top:1px solid #E5E7EB; padding-top:18px;">
+
+    <div style="margin-bottom: 18px;">
+      <div style="font-weight:900; font-size:15px; margin-bottom:6px;">Business Intelligence</div>
+      <p style="margin:0; color:#6B7280; line-height:1.65;">
+        Interactive dashboards, KPI monitoring, and operational analytics designed to improve visibility into performance,
+        workload throughput, and process bottlenecks. Typical deployments include executive scorecards, trend analysis,
+        and alerting for operational thresholds.
+      </p>
+      <div style="margin-top:8px; font-size:12px; font-weight:700; color:#09102A;">
+        Delivery: <span style="color:#6B7280; font-weight:600;">Deployable via API • Custom Deployment</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 18px;">
+      <div style="font-weight:900; font-size:15px; margin-bottom:6px;">Document Intelligence</div>
+      <p style="margin:0; color:#6B7280; line-height:1.65;">
+        OCR extraction, structured data transformation, and AI-assisted document interaction for high-volume operational
+        environments. This module supports ingesting PDFs and images, generating clean outputs, and enabling document Q&A
+        experiences designed for real workflow usage.
+      </p>
+      <div style="margin-top:8px; font-size:12px; font-weight:700; color:#09102A;">
+        Delivery: <span style="color:#6B7280; font-weight:600;">Integration Ready • API-first</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 18px;">
+      <div style="font-weight:900; font-size:15px; margin-bottom:6px;">CMS Coverage Tools</div>
+      <p style="margin:0; color:#6B7280; line-height:1.65;">
+        Coverage validation logic and policy lookup modules designed to support compliance and operational review.
+        These tools are intended to help teams quickly navigate coverage requirements, reduce manual interpretation,
+        and apply consistent decision logic.
+      </p>
+      <div style="margin-top:8px; font-size:12px; font-weight:700; color:#09102A;">
+        Delivery: <span style="color:#6B7280; font-weight:600;">Custom Deployment • Enterprise Workflow Fit</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 6px;">
+      <div style="font-weight:900; font-size:15px; margin-bottom:6px;">Denials Diagnostics</div>
+      <p style="margin:0; color:#6B7280; line-height:1.65;">
+        Analytical tooling to interpret denial patterns, highlight root causes, and recommend operational next steps.
+        The long-term direction supports denial intelligence workflows such as trend detection, prioritization, and
+        feedback loops that reduce repeat denials over time.
+      </p>
+      <div style="margin-top:8px; font-size:12px; font-weight:700; color:#09102A;">
+        Delivery: <span style="color:#6B7280; font-weight:600;">Enterprise Pilot • Custom Deployment</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Next step -->
+  <div style="
+      margin-top: 18px;
+      padding: 14px 14px;
+      border-radius: 14px;
+      background: rgba(235,118,1,.08);
+      border: 1px solid rgba(235,118,1,.22);
+      color:#111827;
+    ">
+    <div style="font-weight:900; margin-bottom:6px;">Proceed</div>
+    <div style="color:#6B7280; line-height:1.6;">
+      To begin, select a product module from the left navigation bar.
+    </div>
+  </div>
+
+</div>
+{% endblock %}
