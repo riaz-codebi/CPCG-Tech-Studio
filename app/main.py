@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.api.auth_google import router as google_auth_router
 from app.web.router import router as web_router
 from app.tools.docchat.router import router as docchat_router
+from app.tools.voicechat.router import router as voicechat_router
 from app.tools.bi.router import router as bi_router
 
 from app.db.session import engine
@@ -58,4 +59,5 @@ async def home(request: Request):
     )
 
 app.include_router(docchat_router)
+app.include_router(voicechat_router)
 app.include_router(bi_router)

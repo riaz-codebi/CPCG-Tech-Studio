@@ -1,0 +1,1024 @@
+{% extends "base_auth.html" %}
+{% set active_page = "voice" %}
+{% set page_title = "Voice Intelligence" %}
+
+{% block content %}
+
+<style>
+/* ===== Layout ===== */
+.di-container { max-width: 1100px; }
+
+.di-hero {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.06);
+}
+
+.di-title { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+.di-sub { color: #6B7280; margin-bottom: 18px; line-height: 1.6; max-width: 980px; }
+.di-list { margin: 10px 0 0 0; padding-left: 18px; color: #374151; line-height: 1.7; }
+.di-list li { margin: 8px 0; }
+
+/* ===== Subtle tech badge ===== */
+.di-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(14,50,148,.08);
+    border: 1px solid rgba(14,50,148,.20);
+    color: #09102A;
+    margin-bottom: 12px;
+}
+
+/* ===== Workflow diagram ===== */
+.workflow-wrap{
+    margin: 16px 0 18px;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    background: linear-gradient(135deg, rgba(14,50,148,.04), rgba(235,118,1,.04));
+}
+
+.workflow-title{
+    font-weight: 900;
+    margin: 0 0 10px;
+    font-size: 13px;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: #111827;
+}
+
+.workflow{
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+/* The connector line behind steps */
+.workflow::before{
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 20px;
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(17,24,39,.10);
+}
+
+/* Animated highlight that sweeps across the connector */
+.workflow::after{
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 20px;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      rgba(235,118,1,0) 0%,
+      rgba(235,118,1,.55) 45%,
+      rgba(14,50,148,.55) 55%,
+      rgba(14,50,148,0) 100%
+    );
+    background-size: 220% 100%;
+    animation: sweep 2.8s ease-in-out infinite;
+    opacity: .65;
+    mix-blend-mode: multiply;
+}
+
+@keyframes sweep{
+    0%   { background-position: 0% 0%; opacity: .35; }
+    40%  { opacity: .70; }
+    100% { background-position: 100% 0%; opacity: .35; }
+}
+
+.step{
+    position: relative;
+    z-index: 1; /* above connector */
+    text-align: center;
+    padding: 2px 6px;
+}
+
+.step-dot{
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    margin: 0 auto 8px;
+    background: rgba(235,118,1,.15);
+    border: 1px solid rgba(235,118,1,.40);
+    box-shadow: 0 0 0 rgba(235,118,1,0);
+    animation: dotPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes dotPulse{
+    0%, 100% { box-shadow: 0 0 0 0 rgba(235,118,1,0); transform: scale(1); }
+    50%      { box-shadow: 0 0 0 10px rgba(235,118,1,.10); transform: scale(1.03); }
+}
+
+/* Slightly different color for later stages to imply pipeline progression */
+.step:nth-child(3) .step-dot{
+    background: rgba(14,50,148,.10);
+    border-color: rgba(14,50,148,.35);
+    animation-delay: .15s;
+}
+.step:nth-child(4) .step-dot{
+    background: rgba(235,118,1,.12);
+    border-color: rgba(235,118,1,.32);
+    animation-delay: .25s;
+}
+.step:nth-child(5) .step-dot{
+    background: rgba(14,50,148,.10);
+    border-color: rgba(14,50,148,.35);
+    animation-delay: .35s;
+}
+
+.step-name{
+    font-weight: 900;
+    font-size: 12px;
+    color: #111827;
+    margin: 0 0 4px;
+}
+
+.step-desc{
+    font-size: 12px;
+    color: #6B7280;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Mobile: stack steps nicely */
+@media (max-width: 900px){
+    .workflow{
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .workflow::before, .workflow::after{
+        left: 16px;
+        right: auto;
+        top: 10px;
+        bottom: 10px;
+        width: 2px;
+        height: auto;
+        background: rgba(17,24,39,.10);
+    }
+    .workflow::after{
+        width: 2px;
+        background: linear-gradient(
+          180deg,
+          rgba(235,118,1,0) 0%,
+          rgba(235,118,1,.55) 45%,
+          rgba(14,50,148,.55) 55%,
+          rgba(14,50,148,0) 100%
+        );
+        background-size: 100% 220%;
+        animation: sweepV 2.8s ease-in-out infinite;
+        opacity: .65;
+    }
+    @keyframes sweepV{
+        0%   { background-position: 0% 0%; opacity: .35; }
+        40%  { opacity: .70; }
+        100% { background-position: 0% 100%; opacity: .35; }
+    }
+
+    .step{
+        text-align: left;
+        padding-left: 34px;
+    }
+    .step-dot{
+        position: absolute;
+        left: 8px;
+        top: 4px;
+        margin: 0;
+    }
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+    .workflow::after, .step-dot { animation: none !important; }
+}
+
+/* ===== Buttons ===== */
+.btn-primary {
+    background: #EB7601;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.btn-primary:hover { filter: brightness(.95); }
+.btn-primary:disabled { opacity: .65; cursor: not-allowed; }
+
+.btn-secondary {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-secondary:hover { border-color: #09102A; }
+.btn-secondary:disabled { opacity: .65; cursor: not-allowed; }
+
+/* ===== Modal ===== */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #fff;
+    width: min(950px, 95%);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 45px rgba(0,0,0,.2);
+    position: relative;
+    transition: width .18s ease;
+}
+
+/* When chat is opened, modal expands */
+.modal.chat-open {
+    width: min(1280px, 96%);
+}
+
+.modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F9FAFB;
+    font-weight: 900;
+}
+
+.modal-body {
+    padding: 18px;
+}
+
+/* Two-column layout inside modal body when chat is open */
+.modal-body-inner {
+    display: block;
+}
+.modal.chat-open .modal-body-inner {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* Left panel always exists */
+.left-panel {
+    width: 100%;
+}
+.modal.chat-open .left-panel {
+    width: 58%;
+}
+
+/* Right chat panel hidden by default */
+.chat-panel {
+    display: none;
+    width: 42%;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+.modal.chat-open .chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 520px; /* adjust as needed */
+}
+
+/* ===== Footer ===== */
+.modal-footer {
+    padding: 14px 18px;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ===== Banner ===== */
+.banner-success {
+    display: none;
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: rgba(16,185,129,.1);
+    border: 1px solid rgba(16,185,129,.3);
+    color: #065F46;
+    font-weight: 800;
+}
+
+.banner-error {
+    display: none;
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    color: #7F1D1D;
+    font-weight: 800;
+}
+
+/* ===== Markdown Preview ===== */
+.md-preview {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 12px;
+    max-height: 420px;
+    overflow: auto;
+    background: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    opacity: 1;
+    transition: opacity .18s ease;
+}
+.md-preview.faded { opacity: 0.35; }
+
+.fade-in { animation: fadeIn .18s ease; }
+@keyframes fadeIn { from { opacity: .2; } to { opacity: 1; } }
+
+/* ===== Processing Overlay ===== */
+.processing-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.86);
+    backdrop-filter: blur(2px);
+    z-index: 5;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+
+.processing-card {
+    width: min(520px, 92%);
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(0,0,0,.12);
+    padding: 18px;
+    text-align: center;
+}
+
+.spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #EB7601;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    animation: spin 1s linear infinite;
+    margin: 6px auto 12px auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+.processing-title { font-weight: 900; margin: 0 0 6px 0; }
+.processing-status { color: #374151; margin: 0; font-weight: 600; }
+.processing-sub { color: #6B7280; margin: 10px 0 0 0; font-size: 12px; }
+
+.progress {
+    height: 8px;
+    border-radius: 999px;
+    background: #F3F4F6;
+    overflow: hidden;
+    border: 1px solid #E5E7EB;
+    margin-top: 14px;
+}
+.progress > div {
+    height: 100%;
+    width: 45%;
+    border-radius: 999px;
+    background: rgba(235,118,1,.85);
+    animation: slide 1.2s ease-in-out infinite;
+}
+@keyframes slide { 0% { transform: translateX(-120%);} 100% { transform: translateX(260%);} }
+
+/* ===== Chat UI ===== */
+.chat-header {
+    padding: 12px 12px;
+    border-bottom: 1px solid #E5E7EB;
+    background: #F9FAFB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 900;
+}
+
+.chat-close {
+    border: 1px solid #E5E7EB;
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-weight: 800;
+}
+.chat-close:hover { border-color: rgba(9,16,42,.25); }
+
+.chat-messages {
+    padding: 12px;
+    overflow: auto;
+    flex: 1;
+    background: #fff;
+}
+
+.msg {
+    display: flex;
+    margin: 10px 0;
+}
+.msg.user { justify-content: flex-end; }
+.msg.assistant { justify-content: flex-start; }
+
+.bubble {
+    max-width: 85%;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid #E5E7EB;
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.35;
+}
+.msg.user .bubble {
+    background: rgba(14,50,148,.08);
+    border-color: rgba(14,50,148,.18);
+}
+.msg.assistant .bubble {
+    background: rgba(17,24,39,.04);
+}
+
+.chat-input {
+    border-top: 1px solid #E5E7EB;
+    padding: 10px;
+    background: #fff;
+}
+.chat-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+.chat-textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    min-height: 44px;
+    max-height: 120px;
+    outline: none;
+}
+.chat-textarea:focus { border-color: rgba(14,50,148,.35); }
+.chat-send {
+    min-width: 92px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: #0E3294;
+    color: #fff;
+    font-weight: 900;
+    cursor: pointer;
+}
+.chat-send:hover { filter: brightness(.96); }
+.chat-send:disabled { opacity: .65; cursor: not-allowed; }
+
+.chat-hint {
+    color: #6B7280;
+    font-size: 12px;
+    margin-top: 8px;
+}
+</style>
+
+<div class="di-container">
+    <div class="di-hero">
+
+        <div class="di-title">Intelligent Voice Platform</div>
+        <div class="di-badge">Voxtral Transcription • Conversational AI • Session Memory</div>
+
+        <div class="di-sub">
+            Transform audio into searchable, conversational intelligence.
+            This module combines production-grade transcription, conversation-level understanding,
+            sentiment insights, and session persistence into a unified voice workspace.
+        </div>
+
+        <!-- Animated Workflow Diagram -->
+        <div class="workflow-wrap">
+            <div class="workflow-title">Workflow</div>
+            <div class="workflow" aria-label="Upload to retrieval workflow diagram">
+                <div class="step">
+                    <div class="step-dot" aria-hidden="true"></div>
+                    <div class="step-name">Upload</div>
+                    <p class="step-desc">Audio file</p>
+                </div>
+                <div class="step">
+                    <div class="step-dot" aria-hidden="true"></div>
+                    <div class="step-name">Transcribe</div>
+                    <p class="step-desc">Voxtral STT</p>
+                </div>
+                <div class="step">
+                    <div class="step-dot" aria-hidden="true"></div>
+                    <div class="step-name">Chat</div>
+                    <p class="step-desc">Query transcript</p>
+                </div>
+                <div class="step">
+                    <div class="step-dot" aria-hidden="true"></div>
+                    <div class="step-name">Analyze</div>
+                    <p class="step-desc">Sentiment + flags</p>
+                </div>
+                <div class="step">
+                    <div class="step-dot" aria-hidden="true"></div>
+                    <div class="step-name">Save</div>
+                    <p class="step-desc">Session + insights</p>
+                </div>
+            </div>
+        </div>
+
+        <h4>Platform Capabilities</h4>
+                <ul class="di-list">
+            <li><strong>High-Accuracy Transcription</strong> – Convert calls, meetings, and dictations into clean, readable transcripts.</li>
+            <li><strong>Speaker & Conversation Structure</strong> – Prepare transcripts for turn-based conversations and downstream analytics (future diarization-ready).</li>
+            <li><strong>Chat / Query with Transcript</strong> – Ask questions, summarize decisions, extract action items, and find key moments.</li>
+            <li><strong>Sentiment & Safety Signals</strong> – Detect tone, frustration, escalation, and abusive language with clear evidence from the transcript.</li>
+            <li><strong>Session-Aware Memory</strong> – Maintain conversational context throughout your analysis session.</li>
+            <li><strong>Enterprise Integration Ready</strong> – Built for API-based workflows, storage, and audit-friendly insight generation.</li>
+        </ul>
+
+        <div style="
+            margin-top:16px;
+            padding:14px;
+            border-radius:14px;
+            background: linear-gradient(135deg, rgba(14,50,148,.05), rgba(235,118,1,.05));
+            border: 1px solid rgba(14,50,148,.12);
+        ">
+            <div style="font-weight:800; margin-bottom:6px;">Vision</div>
+            <div style="font-size:14px; color:#4B5563; line-height:1.6;">
+                This platform is designed to evolve into a retrieval-enabled document intelligence layer capable of
+                conversation search, speaker diarization, redaction, compliance scoring, and secure multi-user collaboration — forming the
+                foundation for enterprise-grade document understanding systems.
+            </div>
+        </div>
+
+        <div style="margin-top:18px;">
+            <button class="btn-primary" onclick="openUploadModal()">Upload Audio</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal-backdrop" id="uploadModal">
+    <div class="modal" id="docModal">
+
+        <!-- Processing Overlay -->
+        <div class="processing-overlay" id="processingOverlay" aria-live="polite" aria-busy="true">
+            <div class="processing-card">
+                <div class="spinner"></div>
+                <h4 class="processing-title">Processing audio…</h4>
+                <p class="processing-status" id="processingStatus">Uploading document</p>
+                <div class="progress"><div></div></div>
+                <p class="processing-sub" id="processingSub">Longer audio may take a bit more time to transcribe.</p>
+            </div>
+        </div>
+
+        <div class="modal-header">
+            Upload Audio
+            <button class="btn-secondary" id="btnCloseX" onclick="closeUploadModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-body-inner">
+                <!-- LEFT PANEL -->
+                <div class="left-panel">
+                    <div class="banner-success" id="successBanner">
+                        Success • Transcript ready
+                    </div>
+
+                    <div class="banner-error" id="errorBanner">
+                        Only audio files are allowed.
+                    </div>
+
+                    <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg" />
+
+                    <div style="margin-top:14px;">
+                        <h5>Transcript Preview</h5>
+                        <div class="md-preview" id="markdownPreview">No audio uploaded yet.</div>
+                    
+                    <div style="margin-top:14px;">
+                        <h5>Sentiment Analysis</h5>
+                        <div class="md-preview" id="sentimentPreview" style="max-height: 180px;">No analysis yet.</div>
+                    </div>
+</div>
+                </div>
+
+                <!-- RIGHT CHAT PANEL -->
+                <div class="chat-panel" id="chatPanel">
+                    <div class="chat-header">
+                        Chat with Transcript
+                        <button class="chat-close" type="button" onclick="closeChatPanel()">Close</button>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages"></div>
+
+                    <div class="chat-input">
+                        <div class="chat-row">
+                            <textarea class="chat-textarea" id="chatInput" placeholder="Ask a question about this transcript…"></textarea>
+                            <button class="chat-send" id="btnSend" type="button" onclick="sendQuestion()">Send</button>
+                        </div>
+                        <div class="chat-hint">Tip: Ask “summarize”, “key issues”, “who said what”, or “list action items”.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-secondary" id="btnClear" onclick="clearAndClose()">Close and clear audio</button>
+
+            <button class="btn-secondary" id="sentimentButton" disabled onclick="runSentiment()">
+                Perform Sentiment Analysis
+            </button>
+
+            <button class="btn-primary" id="chatButton" disabled onclick="openChatPanel()">
+                Chat / Query with Transcript
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAudioId = null;
+let currentTranscript = "";
+let isProcessing = false;
+
+let statusTimer = null;
+const statusSteps = [
+    { text: "Uploading audio", sub: "Securely transferring your file…" },
+    { text: "Normalizing audio", sub: "Preparing audio for transcription…" },
+    { text: "Running Voxtral STT", sub: "Generating transcript…" },
+    { text: "Finalizing transcript", sub: "Cleaning up and formatting preview…" }
+];
+
+function openUploadModal(){
+    document.getElementById('uploadModal').style.display = 'flex';
+}
+
+function closeUploadModal(){
+    if (isProcessing) return;
+    closeChatPanel(true);
+    document.getElementById('uploadModal').style.display = 'none';
+}
+
+function setProcessing(on){
+    isProcessing = on;
+
+    const overlay = document.getElementById('processingOverlay');
+    const fileInput = document.getElementById('fileInput');
+    const btnClear = document.getElementById('btnClear');
+    const btnCloseX = document.getElementById('btnCloseX');
+
+    overlay.style.display = on ? 'flex' : 'none';
+    fileInput.disabled = on;
+    btnClear.disabled = on;
+    btnCloseX.disabled = on;
+
+    const md = document.getElementById('markdownPreview');
+    if (on) md.classList.add('faded');
+    else md.classList.remove('faded');
+
+    const btnSend = document.getElementById('btnSend');
+    const chatInput = document.getElementById('chatInput');
+    if (btnSend) btnSend.disabled = on;
+    if (chatInput) chatInput.disabled = on;
+
+    if (!on) stopStatusLoop();
+}
+
+function startStatusLoop(){
+    stopStatusLoop();
+
+    const statusEl = document.getElementById('processingStatus');
+    const subEl = document.getElementById('processingSub');
+
+    let i = 0;
+    statusEl.textContent = statusSteps[i].text;
+    subEl.textContent = statusSteps[i].sub;
+
+    statusTimer = setInterval(() => {
+        i = (i + 1) % statusSteps.length;
+        statusEl.textContent = statusSteps[i].text;
+        subEl.textContent = statusSteps[i].sub;
+    }, 1400);
+}
+
+function stopStatusLoop(){
+    if (statusTimer){
+        clearInterval(statusTimer);
+        statusTimer = null;
+    }
+}
+
+async function clearAndClose(){
+    if (isProcessing) return;
+
+    if(currentAudioId){
+        try {
+            await fetch(`/api/voice/clear/${currentAudioId}`, { method: "POST" });
+        } catch(e){}
+    }
+
+    currentAudioId = null;
+    currentTranscript = "";
+
+    document.getElementById('markdownPreview').innerText = "No audio uploaded yet.";
+    document.getElementById('markdownPreview').classList.remove('fade-in');
+
+    document.getElementById('successBanner').style.display = 'none';
+    document.getElementById('errorBanner').style.display = 'none';
+
+    document.getElementById('chatButton').disabled = true;
+
+    document.getElementById('sentimentButton').disabled = true;
+    document.getElementById('sentimentPreview').innerText = 'No analysis yet.';
+
+    document.getElementById('fileInput').value = "";
+
+    // reset chat
+    closeChatPanel(true);
+    clearChatUI();
+
+    closeUploadModal();
+}
+
+function showError(msg){
+    const err = document.getElementById('errorBanner');
+    err.innerText = msg || "Upload failed.";
+    err.style.display = 'block';
+    document.getElementById('successBanner').style.display = 'none';
+    document.getElementById('chatButton').disabled = true;
+
+    document.getElementById('sentimentButton').disabled = true;
+    document.getElementById('sentimentPreview').innerText = 'No analysis yet.';
+}
+
+function openChatPanel(){
+    if (!currentAudioId || !currentTranscript) return;
+
+    document.getElementById('docModal').classList.add('chat-open');
+    document.getElementById('chatPanel').style.display = 'flex';
+
+    // seed chat only once
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages.dataset.seeded){
+        appendAssistant("Ask me anything about this transcript. Example: “What is the total allowed amount?”");
+        chatMessages.dataset.seeded = "1";
+    }
+
+    setTimeout(() => {
+        const input = document.getElementById('chatInput');
+        if (input) input.focus();
+    }, 50);
+}
+
+function closeChatPanel(force=false){
+    if (!force && isProcessing) return;
+
+    document.getElementById('docModal').classList.remove('chat-open');
+    document.getElementById('chatPanel').style.display = 'none';
+}
+
+function clearChatUI(){
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.innerHTML = "";
+    delete chatMessages.dataset.seeded;
+    document.getElementById('chatInput').value = "";
+}
+
+function appendUser(text){
+    const wrap = document.createElement("div");
+    wrap.className = "msg user";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    document.getElementById("chatMessages").appendChild(wrap);
+    scrollChatToBottom();
+}
+
+function appendAssistant(text){
+    const wrap = document.createElement("div");
+    wrap.className = "msg assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    document.getElementById("chatMessages").appendChild(wrap);
+    scrollChatToBottom();
+}
+
+function scrollChatToBottom(){
+    const el = document.getElementById("chatMessages");
+    el.scrollTop = el.scrollHeight;
+}
+
+async function sendQuestion(){
+    if (isProcessing) return;
+
+    const input = document.getElementById("chatInput");
+    const btnSend = document.getElementById("btnSend");
+    const question = (input.value || "").trim();
+
+    if (!question) return;
+    if (!currentAudioId || !currentTranscript) return;
+
+    appendUser(question);
+    input.value = "";
+    btnSend.disabled = true;
+
+    // lightweight typing indicator
+    appendAssistant("…");
+    const chatMessages = document.getElementById("chatMessages");
+    const lastBubble = chatMessages.querySelector(".msg.assistant:last-child .bubble");
+
+    try {
+        const resp = await fetch("/api/voice/query", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                doc_id: currentAudioId,
+                question: question,
+                transcript: currentTranscript
+            })
+        });
+
+        if (!resp.ok){
+            let detail = "Query failed";
+            try {
+                const err = await resp.json();
+                detail = err.detail || detail;
+            } catch(e){}
+            throw new Error(detail);
+        }
+
+        const data = await resp.json();
+        if (lastBubble) lastBubble.textContent = data.answer || "(No answer returned)";
+    } catch (e){
+        if (lastBubble) lastBubble.textContent = "Error: " + (e.message || "Unable to answer");
+    } finally {
+        btnSend.disabled = false;
+        scrollChatToBottom();
+    }
+}
+
+document.getElementById('chatInput').addEventListener('keydown', function(e){
+    // Enter = send, Shift+Enter = newline (ChatGPT-like)
+    if (e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendQuestion();
+    }
+});
+
+
+async function runSentiment(){
+    if (isProcessing) return;
+    if (!currentAudioId || !currentTranscript) return;
+
+    const btn = document.getElementById('sentimentButton');
+    btn.disabled = true;
+
+    // Robust, general-purpose sentiment + safety prompt (backend can reuse this)
+    const SENTIMENT_PROMPT = `
+You are analyzing a transcript of an audio conversation. Produce a concise, structured analysis.
+Requirements:
+1) Overall sentiment: Positive / Neutral / Negative / Mixed, with confidence (0-100).
+2) Tone progression: describe if sentiment/tone changes over time (early/middle/late).
+3) Emotion cues: list likely emotions detected (e.g., frustration, anxiety, excitement) with brief evidence.
+4) Escalation & conflict: indicate if conversation escalates, and why.
+5) Abusive / offensive language: detect any abusive, threatening, discriminatory, or profane language. Quote short excerpts (max 2 lines) as evidence.
+6) Risk flags: list any safety/compliance risks (harassment, threats, self-harm, fraud, etc.) if present.
+7) Actionable summary: 3-7 bullets of key points and recommended next steps.
+Keep it grounded in the transcript; do not invent details. If the transcript is incomplete or noisy, say so.
+`.trim();
+
+    try {
+        setProcessing(true);
+        startStatusLoop();
+        document.getElementById('processingStatus').textContent = "Analyzing sentiment";
+        document.getElementById('processingSub').textContent = "Generating tone + safety insights…";
+
+        const resp = await fetch("/api/voice/sentiment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                audio_id: currentAudioId,
+                transcript: currentTranscript,
+                prompt: SENTIMENT_PROMPT
+            })
+        });
+
+        if (!resp.ok){
+            let detail = "Sentiment analysis failed";
+            try {
+                const err = await resp.json();
+                detail = err.detail || detail;
+            } catch(e){}
+            throw new Error(detail);
+        }
+
+        const data = await resp.json();
+        const out = data.analysis || data.result || "(No analysis returned)";
+        const box = document.getElementById("sentimentPreview");
+        box.classList.remove('fade-in');
+        box.innerText = out;
+        void box.offsetWidth;
+        box.classList.add('fade-in');
+
+    } catch(e){
+        const box = document.getElementById("sentimentPreview");
+        box.innerText = "Error: " + (e.message || "Unable to analyze");
+    } finally {
+        setProcessing(false);
+        btn.disabled = false;
+    }
+}
+
+
+document.getElementById('fileInput').addEventListener('change', async function(){
+    if (isProcessing) return;
+
+    const file = this.files[0];
+    if(!file) return;
+
+    const allowedExt = [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".webm"];
+
+    const fileName = file.name.toLowerCase();
+    const hasValidExt = allowedExt.some(ext => fileName.endsWith(ext));
+    const hasAudioMime = file.type && file.type.startsWith("audio/");
+
+    if (!hasValidExt && !hasAudioMime) {
+        showError("Only audio files are allowed.");
+        return;
+    }
+    document.getElementById('errorBanner').style.display = 'none';
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        setProcessing(true);
+        startStatusLoop();
+
+        const response = await fetch("/api/voice/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        if(!response.ok){
+            let detail = "Upload failed";
+            try {
+                const err = await response.json();
+                detail = err.detail || detail;
+            } catch(e){}
+            throw new Error(detail);
+        }
+
+        const data = await response.json();
+
+        currentAudioId = data.audio_id;
+        currentTranscript = data.transcript || "";
+
+        document.getElementById('successBanner').style.display = 'block';
+        // page count not applicable for audio
+
+        const md = document.getElementById('markdownPreview');
+        md.classList.remove('fade-in');
+        md.innerText = currentTranscript || "(No transcript returned.)";
+        void md.offsetWidth;
+        md.classList.add('fade-in');
+
+        document.getElementById('chatButton').disabled = false;
+        document.getElementById('sentimentButton').disabled = false;
+
+        // Reset chat when a new doc is uploaded
+        closeChatPanel(true);
+        clearChatUI();
+
+    } catch(error){
+        showError(error.message);
+    } finally {
+        setProcessing(false);
+    }
+});
+</script>
+
+{% endblock %}
