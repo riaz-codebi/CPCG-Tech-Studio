@@ -82,6 +82,48 @@ async def docchat_upload(file: UploadFile = File(...)):
     return JSONResponse({"doc_id": doc_id, "pages": pages, "markdown": markdown})
 
 
+
+@router.post("/api/docchat/upload_clipboard")
+async def docchat_upload_clipboard(files: list[UploadFile] = File(...)):
+    """
+    Accepts multiple screenshot images from clipboard capture flow.
+    Combines OCR markdown from all images into one document (in order sent).
+    Returns: doc_id, pages, markdown
+    """
+    if not files or len(files) == 0:
+        raise HTTPException(status_code=400, detail="At least one image is required.")
+
+    # Validate all are images
+    for f in files:
+        ctype = (f.content_type or "").lower()
+        if not (ctype.startswith("image/") or _ext(f.filename) in {".png", ".jpg", ".jpeg"}):
+            raise HTTPException(status_code=400, detail="Only image files are allowed for on-screen capture.")
+
+    doc_id = str(uuid.uuid4())
+
+    total_pages = 0
+    md_parts: list[str] = []
+
+    try:
+        for idx, f in enumerate(files, start=1):
+            raw = await f.read()
+            pages, markdown, _raw_json = mistral_ocr_to_markdown(
+                file_bytes=raw,
+                filename=f.filename or f"snip_{idx}.png",
+                content_type=f.content_type,
+            )
+            total_pages += max(pages, 1)
+            if markdown:
+                md_parts.append(f"\n\n---\n\n# Screenshot {idx}\n\n{markdown.strip()}\n")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    combined = "\n".join(md_parts).strip() or "(No text extracted.)"
+
+    return JSONResponse({"doc_id": doc_id, "pages": total_pages, "markdown": combined})
+
+
+
 @router.post("/api/docchat/clear/{doc_id}")
 async def docchat_clear(doc_id: str):
     """

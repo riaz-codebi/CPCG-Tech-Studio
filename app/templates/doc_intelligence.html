@@ -229,6 +229,22 @@
 .btn-secondary:hover { border-color: #09102A; }
 .btn-secondary:disabled { opacity: .65; cursor: not-allowed; }
 
+.btn-clipboard{
+    border-radius: 999px;
+    border: 1px solid rgba(14,50,148,.18);
+    background: linear-gradient(135deg, rgba(14,50,148,.08), rgba(14,50,148,.02));
+    color: #0E3294;
+    padding: 10px 18px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+.btn-clipboard:hover{
+    border-color: rgba(14,50,148,.35);
+    background: linear-gradient(135deg, rgba(14,50,148,.12), rgba(14,50,148,.04));
+    transform: translateY(-1px);
+}
 /* ===== Modal ===== */
 .modal-backdrop {
     position: fixed;
@@ -500,6 +516,85 @@
     font-size: 12px;
     margin-top: 8px;
 }
+
+/* ===== Clipboard Capture Modal ===== */
+.clip-hint{
+    background: linear-gradient(135deg, rgba(14,50,148,.05), rgba(235,118,1,.05));
+    border: 1px solid rgba(14,50,148,.12);
+    border-radius: 14px;
+    padding: 12px;
+    color: #374151;
+    line-height: 1.5;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.clip-hint strong{ color:#111827; }
+
+.gallery-wrap{
+    border: 1px dashed #E5E7EB;
+    border-radius: 14px;
+    padding: 12px;
+    background: #fff;
+}
+.gallery-empty{
+    padding: 18px 12px;
+    text-align: center;
+    color: #6B7280;
+    font-weight: 700;
+}
+.thumb-grid{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+@media (max-width: 900px){
+    .thumb-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+.thumb{
+    position: relative;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #F9FAFB;
+    aspect-ratio: 4 / 3;
+}
+.thumb img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+}
+.thumb .idx{
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    background: rgba(17,24,39,.75);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 12px;
+}
+.thumb .remove{
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid rgba(229,231,235,.95);
+    background: rgba(255,255,255,.92);
+    cursor: pointer;
+    font-weight: 900;
+}
+.thumb .remove:hover{ border-color: rgba(9,16,42,.25); }
+
+.small-note{
+    color:#6B7280;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
 </style>
 
 <div class="di-container">
@@ -572,7 +667,10 @@
         </div>
 
         <div style="margin-top:18px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn-primary" onclick="openUploadModal()">Upload Document</button>
+            <button class="btn-clipboard" onclick="openClipboardModal()">On-Screen Document</button>
+        </div>
         </div>
     </div>
 </div>
@@ -646,8 +744,69 @@
     </div>
 </div>
 
+
+<!-- ================= CLIPBOARD MODAL ================= -->
+<div class="modal-backdrop" id="clipModal">
+    <div class="modal" id="clipDocModal">
+
+        <!-- Processing Overlay (clipboard) -->
+        <div class="processing-overlay" id="clipProcessingOverlay" aria-live="polite" aria-busy="true">
+            <div class="processing-card">
+                <div class="spinner"></div>
+                <h4 class="processing-title">Processing on-screen document…</h4>
+                <p class="processing-status" id="clipProcessingStatus">Importing screenshots</p>
+                <div class="progress"><div></div></div>
+                <p class="processing-sub" id="clipProcessingSub">Combining screenshots into one document.</p>
+            </div>
+        </div>
+
+        <div class="modal-header">
+            On-Screen Document
+            <button class="btn-secondary" id="btnClipCloseX" onclick="closeClipboardModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="banner-error" id="clipErrorBanner">Clipboard does not contain an image. Use Shift + Windows + S first.</div>
+
+            <div class="clip-hint">
+                <strong>Next steps</strong><br/>
+                1) Use <strong>Shift + Windows + S</strong> to capture one or more screenshots of your document.<br/>
+                2) After each screenshot, click <strong>Add Image</strong> to import it into this list.<br/>
+                3) When done, click <strong>Process Document</strong>.
+            </div>
+
+            <div class="gallery-wrap">
+                <div class="gallery-empty" id="galleryEmpty">
+                    No images added yet.
+                </div>
+                <div class="thumb-grid" id="thumbGrid" style="display:none;"></div>
+            </div>
+
+            <div class="small-note">
+                Tip: Keep capturing in order (top → bottom). Add each screenshot immediately so the sequence stays correct.
+            </div>
+        </div>
+
+        <div class="modal-footer" style="justify-content: space-between;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn-secondary" id="btnAddClip" onclick="addClipboardImage()">Add Image</button>
+                <button class="btn-secondary" id="btnClearClip" onclick="clearClipboardImages()">Clear</button>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+                <button class="btn-secondary" onclick="closeClipboardModal()">Cancel</button>
+                <button class="btn-primary" id="btnProcessClip" disabled onclick="processClipboardDocument()">Process Document</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
 let currentDocId = null;
+
+// Clipboard capture session (in-memory)
+let clipboardImages = []; // [{blob, url, name}]
+
 let currentMarkdown = "";
 let isProcessing = false;
 
@@ -658,6 +817,198 @@ const statusSteps = [
     { text: "Running AI OCR", sub: "Extracting text and layout…" },
     { text: "Building structured Markdown", sub: "Formatting output for preview…" }
 ];
+
+
+function openClipboardModal(){
+    document.getElementById('clipModal').style.display = 'flex';
+    document.getElementById('clipErrorBanner').style.display = 'none';
+    // safety: ensure overlay hidden
+    document.getElementById('clipProcessingOverlay').style.display = 'none';
+}
+
+function closeClipboardModal(){
+    if (isProcessing) return;
+    document.getElementById('clipModal').style.display = 'none';
+    document.getElementById('clipErrorBanner').style.display = 'none';
+}
+
+function showClipError(msg){
+    const err = document.getElementById('clipErrorBanner');
+    err.innerText = msg || "Clipboard does not contain an image. Use Shift + Windows + S first.";
+    err.style.display = 'block';
+}
+
+function setClipProcessing(on){
+    const overlay = document.getElementById('clipProcessingOverlay');
+    const btnAdd = document.getElementById('btnAddClip');
+    const btnClear = document.getElementById('btnClearClip');
+    const btnClose = document.getElementById('btnClipCloseX');
+    const btnProcess = document.getElementById('btnProcessClip');
+
+    overlay.style.display = on ? 'flex' : 'none';
+    btnAdd.disabled = on;
+    btnClear.disabled = on;
+    btnClose.disabled = on;
+    btnProcess.disabled = on || clipboardImages.length === 0;
+}
+
+function renderClipboardGallery(){
+    const empty = document.getElementById('galleryEmpty');
+    const grid = document.getElementById('thumbGrid');
+
+    if (clipboardImages.length === 0){
+        empty.style.display = 'block';
+        grid.style.display = 'none';
+        grid.innerHTML = "";
+        document.getElementById('btnProcessClip').disabled = true;
+        return;
+    }
+
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+    grid.innerHTML = "";
+
+    clipboardImages.forEach((img, idx) => {
+        const card = document.createElement('div');
+        card.className = 'thumb';
+
+        const imageEl = document.createElement('img');
+        imageEl.src = img.url;
+        imageEl.alt = img.name || `Screenshot ${idx+1}`;
+
+        const badge = document.createElement('div');
+        badge.className = 'idx';
+        badge.textContent = String(idx + 1);
+
+        const remove = document.createElement('button');
+        remove.className = 'remove';
+        remove.type = 'button';
+        remove.title = 'Remove';
+        remove.textContent = '✕';
+        remove.onclick = () => {
+            try { URL.revokeObjectURL(img.url); } catch(e){}
+            clipboardImages.splice(idx, 1);
+            renderClipboardGallery();
+        };
+
+        card.appendChild(imageEl);
+        card.appendChild(badge);
+        card.appendChild(remove);
+        grid.appendChild(card);
+    });
+
+    document.getElementById('btnProcessClip').disabled = false;
+}
+
+async function addClipboardImage(){
+    document.getElementById('clipErrorBanner').style.display = 'none';
+
+    if (!navigator.clipboard || !navigator.clipboard.read){
+        showClipError("Clipboard access is not available in this browser. Please use Chrome or Edge.");
+        return;
+    }
+
+    try{
+        const items = await navigator.clipboard.read();
+        let found = null;
+
+        for (const item of items){
+            // find an image type
+            const type = item.types.find(t => t.startsWith("image/"));
+            if (type){
+                found = await item.getType(type);
+                break;
+            }
+        }
+
+        if (!found){
+            showClipError("No image found in clipboard. Use Shift + Windows + S to capture, then click Add Image.");
+            return;
+        }
+
+        const blob = found;
+        const url = URL.createObjectURL(blob);
+        const name = `snip_${String(clipboardImages.length + 1).padStart(2,'0')}.png`;
+
+        clipboardImages.push({ blob, url, name });
+        renderClipboardGallery();
+
+    } catch(e){
+        showClipError("Clipboard permission denied. Click Add Image again and allow clipboard access.");
+    }
+}
+
+function clearClipboardImages(){
+    clipboardImages.forEach(i => { try { URL.revokeObjectURL(i.url); } catch(e){} });
+    clipboardImages = [];
+    renderClipboardGallery();
+    document.getElementById('clipErrorBanner').style.display = 'none';
+}
+
+function applyDocResultToUploadModal(data){
+    // data: {doc_id, pages, markdown}
+    currentDocId = data.doc_id;
+    currentMarkdown = data.markdown || "";
+
+    document.getElementById('successBanner').style.display = 'block';
+    document.getElementById('pageCount').innerText = data.pages;
+
+    const md = document.getElementById('markdownPreview');
+    md.classList.remove('fade-in');
+    md.innerText = currentMarkdown || "(No text extracted.)";
+    void md.offsetWidth;
+    md.classList.add('fade-in');
+
+    document.getElementById('chatButton').disabled = false;
+
+    // Reset chat when a new doc is created
+    closeChatPanel(true);
+    clearChatUI();
+}
+
+async function processClipboardDocument(){
+    if (clipboardImages.length === 0) return;
+
+    // Show processing overlay in clipboard modal
+    setClipProcessing(true);
+
+    try{
+        const fd = new FormData();
+        clipboardImages.forEach((img) => {
+            fd.append("files", img.blob, img.name || "snip.png");
+        });
+
+        const resp = await fetch("/api/docchat/upload_clipboard", {
+            method: "POST",
+            body: fd
+        });
+
+        if (!resp.ok){
+            let detail = "Processing failed";
+            try {
+                const err = await resp.json();
+                detail = err.detail || detail;
+            } catch(e){}
+            throw new Error(detail);
+        }
+
+        const data = await resp.json();
+
+        // Open the existing upload modal and populate results
+        openUploadModal();
+        applyDocResultToUploadModal(data);
+
+        // Close clipboard modal and clear session images
+        closeClipboardModal();
+        clearClipboardImages();
+
+    } catch(e){
+        showClipError(e.message || "Unable to process clipboard images.");
+    } finally {
+        setClipProcessing(false);
+    }
+}
+
 
 function openUploadModal(){
     document.getElementById('uploadModal').style.display = 'flex';
